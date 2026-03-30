@@ -1,0 +1,3 @@
+@echo off
+echo Iniciando Cliente Dara...
+java -jar DaraGame.jar
