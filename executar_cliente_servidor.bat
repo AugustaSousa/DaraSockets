@@ -1,5 +1,5 @@
 @echo off
-echo DARA GAME - Criar Executavel
+echo DARA GAME
 echo.
 
 echo [1/4] Compilando com UTF-8...
@@ -18,21 +18,17 @@ echo Class-Path: . >> MANIFEST.MF
 echo [3/4] Criando arquivo JAR...
 jar cfm DaraGame.jar MANIFEST.MF src/main/*.class src/controller/*.class src/model/*.class src/view/*.class src/network/*.class
 
-echo [4/4] Criando executavel BAT...
-echo @echo off > DaraGame.bat
-echo echo Iniciando Dara Game... >> DaraGame.bat
-echo java -jar DaraGame.jar >> DaraGame.bat
-echo pause >> DaraGame.bat
+echo [4/4] Iniciando Servidor e Clientes...
+echo.
 
-echo.
-echo EXECUTAVEL CRIADO COM SUCESSO
-echo.
-echo Para iniciar o servidor primeiro:
-echo   java src.network.Servidor
-echo.
-echo Para executar o jogo:
-echo   1. Duplo clique em DaraGame.bat
-echo   ou
-echo   2. java -jar DaraGame.jar
-echo.
+start "Servidor Dara" cmd /k "echo Servidor Dara Iniciado... & java -cp . src.network.Servidor"
+
+timeout /t 2 /nobreak > nul
+
+start "Cliente 1 - Jogador 1" cmd /k "echo Cliente 1 - Jogador 1 & java -jar DaraGame.jar"
+
+timeout /t 1 /nobreak > nul
+
+start "Cliente 2 - Jogador 2" cmd /k "echo Cliente 2 - Jogador 2 & java -jar DaraGame.jar"
+
 pause

@@ -37,12 +37,20 @@ public class Tabuleiro {
         return true;
     }
     
+    public boolean removerPeca(int posicao) {
+        if (posicao < 0 || posicao >= casas.length) return false;
+        if (casas[posicao] == -1) return false;
+        
+        casas[posicao] = -1;
+        return true;
+    }
+    
     public boolean moverPeca(int origem, int destino, int jogador) {
         if (origem < 0 || origem >= casas.length) return false;
         if (destino < 0 || destino >= casas.length) return false;
         if (casas[origem] != jogador) return false;
         if (casas[destino] != -1) return false;
-        if (!isAdjacente(origem, destino)) return false;
+        if (!isMovimentoAdjacente(origem, destino)) return false;
         
         casas[destino] = jogador;
         casas[origem] = -1;
@@ -57,7 +65,7 @@ public class Tabuleiro {
         return true;
     }
     
-    private boolean isAdjacente(int origem, int destino) {
+    public boolean isMovimentoAdjacente(int origem, int destino) {
         int linhaOrigem = origem / colunas;
         int colunaOrigem = origem % colunas;
         int linhaDestino = destino / colunas;
@@ -69,6 +77,9 @@ public class Tabuleiro {
         return (diffLinha + diffColuna == 1);
     }
     
+    /**
+     * Verifica se a posição faz parte de uma linha de 3 peças
+     */
     public boolean verificarLinha(int posicao, int jogador) {
         int linha = posicao / colunas;
         int coluna = posicao % colunas;
@@ -97,6 +108,46 @@ public class Tabuleiro {
         }
         
         return count >= 3;
+    }
+    
+    /**
+     * Retorna o tamanho da linha que a posição faz parte
+     * Usado para a REGRA 2: não pode formar linha de 4 ou mais
+     * Exemplo: se retornar 3 → pode capturar
+     *          se retornar 4 ou 5 → jogada inválida
+     */
+    public int getTamanhoLinha(int posicao, int jogador) {
+        int linha = posicao / colunas;
+        int coluna = posicao % colunas;
+        
+        // Verifica horizontal
+        int countHorizontal = 1;
+        // Para esquerda
+        for (int c = coluna - 1; c >= 0; c--) {
+            if (casas[linha * colunas + c] == jogador) countHorizontal++;
+            else break;
+        }
+        // Para direita
+        for (int c = coluna + 1; c < colunas; c++) {
+            if (casas[linha * colunas + c] == jogador) countHorizontal++;
+            else break;
+        }
+        
+        // Verifica vertical
+        int countVertical = 1;
+        // Para cima
+        for (int l = linha - 1; l >= 0; l--) {
+            if (casas[l * colunas + coluna] == jogador) countVertical++;
+            else break;
+        }
+        // Para baixo
+        for (int l = linha + 1; l < linhas; l++) {
+            if (casas[l * colunas + coluna] == jogador) countVertical++;
+            else break;
+        }
+        
+        // Retorna o maior tamanho (horizontal ou vertical)
+        return Math.max(countHorizontal, countVertical);
     }
     
     public int contarPecas(int jogador) {

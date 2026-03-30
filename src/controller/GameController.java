@@ -1,7 +1,6 @@
 package src.controller;
 
 import src.model.Jogo;
-import src.model.Tabuleiro;
 import src.network.Cliente;
 import src.view.Ui;
 import java.awt.Color;
@@ -16,7 +15,6 @@ public class GameController {
     private Color minhaCor;
     private Color corAdversaria;
     
-    // Cores disponíveis
     private Color[] cores = {
         new Color(255, 68, 68),   // Vermelho
         new Color(68, 255, 68),   // Verde
@@ -38,8 +36,6 @@ public class GameController {
         ui.iniciar();
     }
     
-    // rede
-    
     public void onMensagemRecebida(String mensagem) {
         System.out.println("Recebido: " + mensagem);
         String[] partes = mensagem.split("@", 2);
@@ -47,7 +43,7 @@ public class GameController {
         String dados = partes.length > 1 ? partes[1] : "";
         
         switch (comando) {
-            case "tuEhPrimeiro":
+            case "primeiroAJogar":
                 jogo.setEuSou(0);
                 oponenteNome = dados;
                 ui.setOponenteNome(oponenteNome);
@@ -56,7 +52,7 @@ public class GameController {
                 ui.mostrarMensagem("Você será o primeiro a jogar! Oponente: " + oponenteNome);
                 break;
                 
-            case "tuEhSegundo":
+            case "segundoAJogar":
                 jogo.setEuSou(1);
                 oponenteNome = dados;
                 ui.setOponenteNome(oponenteNome);
@@ -65,7 +61,7 @@ public class GameController {
                 ui.mostrarMensagem("Você será o segundo a jogar! Oponente: " + oponenteNome);
                 break;
                 
-            case "ESCOLHER_ORDEM":
+            case "escolherOrdem":
                 ui.mudarEstado("OrdemJogada");
                 ui.mostrarDialogoOrdem();
                 break;
@@ -106,7 +102,7 @@ public class GameController {
                 ui.mostrarMensagem("Oponente recusou o empate.");
                 break;
                 
-            case "queroNovamente":
+            case "queroRevanche":
                 ui.mostrarDialogoRevanche();
                 break;
                 
@@ -134,7 +130,6 @@ public class GameController {
                 break;
         }
         
-        // Verifica vitória
         if (jogo.getVencedor() != -1) {
             ui.mostrarDialogoFimJogo(jogo.getVencedor() == jogo.getEuSou());
         }
@@ -145,9 +140,7 @@ public class GameController {
         ui.mostrarMensagem("Erro de conexão: " + erro);
         ui.fechar();
     }
-    
-    // ui
-    
+
     public void enviarOrdem(String ordem) {
         cliente.enviar(ordem);
     }
@@ -159,7 +152,6 @@ public class GameController {
             cliente.enviar("recebeCorAdversaria@" + idxCor);
             ui.setMinhaCor(minhaCor);
             
-            // Se já recebeu a cor do oponente, inicia o jogo
             if (corAdversaria != null) {
                 ui.mudarEstado("Jogando");
                 ui.atualizarStatus();
@@ -176,17 +168,17 @@ public class GameController {
         if (corEscolhida) {
             ui.mudarEstado("Jogando");
             ui.atualizarStatus();
-            ui.mostrarMensagem("Jogo iniciado! " + (jogo.isMinhaVez() ? "Sua vez!" : "Aguarde o oponente..."));
+            ui.mostrarMensagem("Jogo iniciado. " + (jogo.isMinhaVez() ? "Sua vez!" : "Aguarde o oponente..."));
         } else {
             ui.mudarEstado("SelecionandoCor");
-            ui.mostrarMensagem("Cor do oponente: " + nomesCores[idxCor] + ". Agora escolha a sua cor!");
+            ui.mostrarMensagem("Cor do oponente: " + nomesCores[idxCor] + ". Agora escolha a sua cor.");
         }
         ui.atualizarTabuleiro();
     }
     
     public void realizarJogada(int posicao) {
         if (!jogo.isMinhaVez()) {
-            ui.mostrarMensagem("Aguarde sua vez!");
+            ui.mostrarMensagem("Aguarde sua vez.");
             return;
         }
         
@@ -277,8 +269,7 @@ public class GameController {
         ui.mudarEstado("OrdemJogada");
     }
     
-    // getters
-    
+
     public Jogo getJogo() { return jogo; }
     public String getMeuNome() { return meuNome; }
     public Color getMinhaCor() { return minhaCor; }

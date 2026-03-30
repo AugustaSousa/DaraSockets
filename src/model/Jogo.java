@@ -27,20 +27,60 @@ public class Jogo {
         this.meuNome = "";
     }
     
-    // jogadas
+    // Verifica se posição cria linha de 3
+    private boolean posicaoCriaLinha(int posicao, int jogador) {
+        Tabuleiro teste = new Tabuleiro(tabuleiro.getLinhas(), tabuleiro.getColunas());
+        
+        // estado atual do tabuleiro
+        for (int i = 0; i < tabuleiro.getTotalCasas(); i++) {
+            if (tabuleiro.getCasa(i) != -1) {
+                teste.posicionarPeca(tabuleiro.getCasa(i), i);
+            }
+        }
+        
+        //simula
+        teste.posicionarPeca(jogador, posicao);
+        
+        return teste.verificarLinha(posicao, jogador);
+    }
     
-    //Posiciona uma peça na fase de colocação
+    // Verifica se movimento cria linha de 4 ou mais
+    private boolean movimentoCriaLinhaGrande(int origem, int destino, int jogador) {
+        Tabuleiro teste = new Tabuleiro(tabuleiro.getLinhas(), tabuleiro.getColunas());
+        
+        for (int i = 0; i < tabuleiro.getTotalCasas(); i++) {
+            if (tabuleiro.getCasa(i) != -1) {
+                teste.posicionarPeca(tabuleiro.getCasa(i), i);
+            }
+        }
+        
+        teste.removerPeca(origem);
+        teste.posicionarPeca(jogador, destino);
+        
+        // valida a linha
+        int tamanhoLinha = teste.getTamanhoLinha(destino, jogador);
+        
+        // condicao
+        return tamanhoLinha >= 4;
+    }
+    
+    // Colocação
+    // Não pode formar linha de 3
     public boolean posicionarPeca(int posicao) {
         if (!fasePosicionamento) return false;
         if (pecasRestantes[jogadorAtual] <= 0) return false;
         
+        if (posicaoCriaLinha(posicao, jogadorAtual)) {
+            System.out.println("Jogada invalida. Nao pode formar linha de 3 na fase de colocacao.");
+            return false;
+        }
+        
         if (tabuleiro.posicionarPeca(jogadorAtual, posicao)) {
             pecasRestantes[jogadorAtual]--;
             
-            // Verifica se terminou a fase de posicionamento
             if (pecasRestantes[0] == 0 && pecasRestantes[1] == 0) {
                 fasePosicionamento = false;
-                System.out.println("Fase de movimentação iniciada!");
+                System.out.println("Fase de movimentacao iniciada.");
             }
             
             alternarJogador();
@@ -49,17 +89,28 @@ public class Jogo {
         return false;
     }
     
-    // Move uma peça na fase de movimentação
+    // Movimentação
+    // Não pode formar linha de 4 ou mais
     public boolean moverPeca(int origem, int destino) {
         if (fasePosicionamento) return false;
         if (aguardandoCaptura) return false;
         
+        if (tabuleiro.getCasa(origem) != jogadorAtual) return false;
+        
+        if (tabuleiro.getCasa(destino) != -1) return false;
+        
+        if (!tabuleiro.isMovimentoAdjacente(origem, destino)) return false;
+        
+        if (movimentoCriaLinhaGrande(origem, destino, jogadorAtual)) {
+            System.out.println("Jogada invalida. Nao pode formar linha de 4 ou mais.");
+            return false;
+        }
+        
         if (tabuleiro.moverPeca(origem, destino, jogadorAtual)) {
-            // Verifica se formou linha
             if (tabuleiro.verificarLinha(destino, jogadorAtual)) {
                 aguardandoCaptura = true;
                 linhaFormada = destino / tabuleiro.getColunas();
-                System.out.println("Jogador " + jogadorAtual + " formou linha!");
+                System.out.println("Jogador " + jogadorAtual + " formou linha de 3. Agora pode capturar.");
             } else {
                 alternarJogador();
             }
@@ -70,7 +121,7 @@ public class Jogo {
         return false;
     }
     
-    // Captura uma peça do oponente após formar linha
+    // Captura
     public boolean capturarPeca(int posicao) {
         if (!aguardandoCaptura) return false;
         
@@ -79,24 +130,22 @@ public class Jogo {
             aguardandoCaptura = false;
             alternarJogador();
             verificarVencedor();
+            System.out.println("Captura realizada na posição " + posicao);
             return true;
         }
         return false;
     }
     
-    // Seleciona uma peça (para movimentação)
-    // Retorna true se a peça foi selecionada, false se foi movimento
+    // Seleção de peça
     public boolean selecionarPeca(int posicao) {
         if (fasePosicionamento) return false;
         if (aguardandoCaptura) return false;
         if (tabuleiro.getCasa(posicao) != jogadorAtual) return false;
         
-        // Marca como selecionada (valor 2 temporário)
         tabuleiro.setCasa(posicao, 2);
         return true;
     }
     
-    // Desseleciona a peça atual
     public void desselecionarPeca(int posicao) {
         if (tabuleiro.getCasa(posicao) == 2) {
             tabuleiro.setCasa(posicao, jogadorAtual);
@@ -114,19 +163,20 @@ public class Jogo {
         if (pecasJogador0 <= 2) {
             vencedor = 1;
             score[1]++;
+            System.out.println("Jogador 2 venceu.");
         } else if (pecasJogador1 <= 2) {
             vencedor = 0;
             score[0]++;
+            System.out.println("Jogador 1 venceu.");
         }
     }
     
-    // recebe jogadas do oponente
-    
+    // Recebe jogadas do oponente
     public void processarJogadaOponente(String tipo, String dados) {
         switch (tipo) {
             case "posicionamento":
                 int pos = Integer.parseInt(dados);
-                posicionarPeca(pos);
+                posicionarPeca(pos); 
                 break;
             case "jogada":
                 String[] mov = dados.split(",");
@@ -139,7 +189,7 @@ public class Jogo {
         }
     }
     
-    
+    // Reset
     public void reset() {
         tabuleiro.limpar();
         pecasRestantes = new int[]{12, 12};
@@ -157,8 +207,6 @@ public class Jogo {
         meuNome = "";
     }
     
-    // getters
-    
     public Tabuleiro getTabuleiro() { return tabuleiro; }
     public int[] getPecasRestantes() { return pecasRestantes; }
     public int[] getScore() { return score; }
@@ -172,28 +220,32 @@ public class Jogo {
     public boolean isMinhaVez() { return euSou == jogadorAtual; }
     public boolean isJogoAtivo() { return vencedor == -1; }
     
-    // setters
-    
     public void setEuSou(int euSou) { this.euSou = euSou; }
     public void setMeuNome(String nome) { this.meuNome = nome; }
     public void setScore(int[] score) { this.score = score; }
     
-    // ui
-    // estados
+
+    public boolean isPosicaoValidaParaPosicionamento(int posicao) {
+        if (!fasePosicionamento) return false;
+        if (tabuleiro.getCasa(posicao) != -1) return false;
+        return !posicaoCriaLinha(posicao, jogadorAtual);
+    }
+    
+  
     public String getStatusText() {
         if (vencedor != -1) {
-            if (vencedor == euSou) return "VOCÊ VENCEU!";
-            return "VOCÊ PERDEU!";
+            if (vencedor == euSou) return "VOCÊ VENCEU >.<";
+            return "VOCÊ PERDEU T.T";
         }
         
         if (fasePosicionamento) {
-            if (isMinhaVez()) return "Sua vez - Coloque uma peça!";
+            if (isMinhaVez()) return "Sua vez - Coloque uma peça.";
             return "Aguardando oponente colocar peça...";
         } else if (aguardandoCaptura) {
-            if (isMinhaVez()) return "CAPTURE! Clique em uma peça do oponente!";
+            if (isMinhaVez()) return "CAPTURE. Clique em uma peça do oponente.";
             return "Oponente vai capturar...";
         } else {
-            if (isMinhaVez()) return "Sua vez - Mova uma peça!";
+            if (isMinhaVez()) return "Sua vez - Mova uma peça.";
             return "Aguardando oponente mover...";
         }
     }

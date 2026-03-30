@@ -26,7 +26,7 @@ public class Canvas extends JPanel {
     public Canvas(GameController controller) {
         this.controller = controller;
         this.jogo = controller.getJogo();
-        this.setBackground(new Color(240, 220, 180));
+        this.setBackground(new Color(240, 240, 245));
         this.setPreferredSize(new Dimension(600, 550));
         
         this.addMouseListener(new MouseAdapter() {
@@ -85,13 +85,18 @@ public class Canvas extends JPanel {
     }
     
     private void processarCliqueCor(int x, int y) {
-        int startX = (jogo.getEuSou() == 0) ? 100 : 350;
+        // Área onde as cores são desenhadas (centralizada)
+        int startY = 180;
+        int circleSize = 55;
+        int spacing = 15;
+        int totalWidth = controller.getCores().length * (circleSize + spacing) - spacing;
+        int startX = (getWidth() - totalWidth) / 2;
         
         for (int i = 0; i < controller.getCores().length; i++) {
-            int corX = startX + (i % 3) * 90;
-            int corY = 100 + (i / 3) * 90;
+            int corX = startX + i * (circleSize + spacing);
+            int corY = startY;
             
-            if (x >= corX && x <= corX + 50 && y >= corY && y <= corY + 50) {
+            if (x >= corX && x <= corX + circleSize && y >= corY && y <= corY + circleSize) {
                 controller.enviarCorEscolhida(i);
                 repaint();
                 break;
@@ -131,19 +136,27 @@ public class Canvas extends JPanel {
     }
     
     private void desenharTabuleiro(Graphics2D g2d) {
-        g2d.setColor(new Color(200, 160, 120));
+        // Fundo do tabuleiro
+        g2d.setColor(new Color(210, 180, 140));
         g2d.fillRect(offsetX - 5, offsetY - 5, 6 * cellWidth + 10, 5 * cellHeight + 10);
         
+        // Bordas
         g2d.setColor(Color.BLACK);
         g2d.setStroke(new BasicStroke(2));
         
-        for (int i = 0; i < 5; i++) {
-            g2d.drawRect(offsetX, offsetY + i * cellHeight, 6 * cellWidth, cellHeight);
-        }
-        for (int i = 0; i < 6; i++) {
-            g2d.drawRect(offsetX + i * cellWidth, offsetY, cellWidth, 5 * cellHeight);
+        // Linhas horizontais
+        for (int i = 0; i <= 5; i++) {
+            g2d.drawLine(offsetX, offsetY + i * cellHeight, 
+                        offsetX + 6 * cellWidth, offsetY + i * cellHeight);
         }
         
+        // Linhas verticais
+        for (int i = 0; i <= 6; i++) {
+            g2d.drawLine(offsetX + i * cellWidth, offsetY, 
+                        offsetX + i * cellWidth, offsetY + 5 * cellHeight);
+        }
+        
+        // Números das posições
         g2d.setFont(new Font("Monospaced", Font.PLAIN, 10));
         g2d.setColor(Color.DARK_GRAY);
         for (int i = 0; i < 5; i++) {
@@ -164,18 +177,16 @@ public class Canvas extends JPanel {
                 int idx = i * 6 + j;
                 int valor = casas[idx];
                 
-                if (valor != -1) {
+                if (valor != -1 && valor != 2) {
                     int x = offsetX + j * cellWidth + cellWidth / 2;
                     int y = offsetY + i * cellHeight + cellHeight / 2;
                     int raio = cellWidth / 3;
                     
                     Color cor;
-                    if (valor == 2) {
-                        cor = Color.YELLOW;
-                    } else if (valor == jogo.getEuSou()) {
-                        cor = minhaCor != null ? minhaCor : Color.RED;
+                    if (valor == jogo.getEuSou()) {
+                        cor = minhaCor != null ? minhaCor : new Color(255, 68, 68);
                     } else {
-                        cor = corAdversaria != null ? corAdversaria : Color.BLUE;
+                        cor = corAdversaria != null ? corAdversaria : new Color(68, 68, 255);
                     }
                     
                     g2d.setColor(cor);
@@ -185,7 +196,7 @@ public class Canvas extends JPanel {
                     g2d.drawOval(x - raio, y - raio, raio * 2, raio * 2);
                     
                     if (posicaoSelecionada == idx) {
-                        g2d.setColor(Color.YELLOW);
+                        g2d.setColor(new Color(255, 255, 100));
                         g2d.setStroke(new BasicStroke(3));
                         g2d.drawOval(x - raio - 3, y - raio - 3, raio * 2 + 6, raio * 2 + 6);
                     }
@@ -198,10 +209,10 @@ public class Canvas extends JPanel {
         int[] pecas = jogo.getPecasRestantes();
         int meuNumero = jogo.getEuSou();
         
-        Color minhaCorAtual = minhaCor != null ? minhaCor : Color.RED;
-        Color corOponente = corAdversaria != null ? corAdversaria : Color.BLUE;
+        Color minhaCorAtual = minhaCor != null ? minhaCor : new Color(255, 68, 68);
+        Color corOponente = corAdversaria != null ? corAdversaria : new Color(68, 68, 255);
         
-        // jogador
+        // Suas peças (esquerda)
         g2d.setColor(Color.BLACK);
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
         g2d.drawString("Suas peças: " + pecas[meuNumero], 20, 30);
@@ -212,7 +223,7 @@ public class Canvas extends JPanel {
             g2d.drawOval(20, 40 + i * 22, 25, 25);
         }
         
-        // oponente
+        // Peças do oponente (direita)
         g2d.setColor(Color.BLACK);
         g2d.drawString("Peças do oponente: " + pecas[1 - meuNumero], getWidth() - 150, 30);
         for (int i = 0; i < Math.min(pecas[1 - meuNumero], 8); i++) {
@@ -222,48 +233,82 @@ public class Canvas extends JPanel {
             g2d.drawOval(getWidth() - 60, 40 + i * 22, 25, 25);
         }
         
-        // linha de captura
-        if (jogo.isAguardandoCaptura() && jogo.getLinhaFormada() >= 0) {
-            g2d.setColor(new Color(255, 200, 100, 100));
-            int y = offsetY + jogo.getLinhaFormada() * cellHeight;
-            g2d.fillRect(offsetX, y, 6 * cellWidth, cellHeight);
-        }
-        
-        // informações de fase
+        // Fase do jogo
         String fase = jogo.isFasePosicionamento() ? "COLOCAÇÃO" : "MOVIMENTAÇÃO";
-        g2d.setColor(Color.BLACK);
-        g2d.drawString("Fase: " + fase, getWidth() / 2 - 50, 25);
+        g2d.setColor(new Color(70, 130, 200));
+        g2d.setFont(new Font("Arial", Font.BOLD, 12));
+        g2d.drawString("FASE: " + fase, getWidth() / 2 - 45, 25);
         
+        // Mensagem de captura
         if (jogo.isAguardandoCaptura() && jogo.isMinhaVez()) {
             g2d.setColor(Color.RED);
             g2d.setFont(new Font("Arial", Font.BOLD, 14));
-            g2d.drawString("CLIQUE EM UMA PEÇA DO OPONENTE PARA CAPTURAR!", 
-                           getWidth() / 2 - 200, getHeight() - 20);
+            g2d.drawString("CLIQUE EM UMA PEÇA DO OPONENTE PARA CAPTURAR.", 
+                           getWidth() / 2 - 210, getHeight() - 20);
         }
     }
     
     private void desenharSelecaoCor(Graphics2D g2d) {
-        g2d.setFont(new Font("Arial", Font.BOLD, 16));
-        g2d.setColor(Color.BLACK);
-        g2d.drawString("Escolha a cor das suas peças:", 180, 50);
+        // Fundo semi-transparente
+        g2d.setColor(new Color(255, 255, 255, 230));
+        g2d.fillRect(0, 0, getWidth(), getHeight());
         
-        int startX = (jogo.getEuSou() == 0) ? 100 : 350;
+        // Título
+        g2d.setFont(new Font("Arial", Font.BOLD, 18));
+        g2d.setColor(new Color(70, 130, 200));
+        String titulo = "Escolha a cor das suas peças";
+        FontMetrics fm = g2d.getFontMetrics();
+        int tituloX = (getWidth() - fm.stringWidth(titulo)) / 2;
+        g2d.drawString(titulo, tituloX, 120);
+        
+        // Sub-título com instrução
+        g2d.setFont(new Font("Arial", Font.PLAIN, 12));
+        g2d.setColor(new Color(100, 100, 100));
+        String instrucao = "Clique em uma das cores abaixo";
+        int instrucaoX = (getWidth() - g2d.getFontMetrics().stringWidth(instrucao)) / 2;
+        g2d.drawString(instrucao, instrucaoX, 150);
+        
+        // Cores em linha horizontal centralizada
         Color[] cores = controller.getCores();
+        String[] nomesCores = controller.getNomesCores();
+        int circleSize = 60;
+        int spacing = 20;
+        int totalWidth = cores.length * (circleSize + spacing) - spacing;
+        int startX = (getWidth() - totalWidth) / 2;
+        int startY = 200;
         
         for (int i = 0; i < cores.length; i++) {
-            int x = startX + (i % 3) * 90;
-            int y = 100 + (i / 3) * 90;
+            int x = startX + i * (circleSize + spacing);
+            int y = startY;
             
+            // Círculo da cor
             g2d.setColor(cores[i]);
-            g2d.fillOval(x, y, 50, 50);
+            g2d.fillOval(x, y, circleSize, circleSize);
             g2d.setColor(Color.BLACK);
-            g2d.drawOval(x, y, 50, 50);
+            g2d.setStroke(new BasicStroke(2));
+            g2d.drawOval(x, y, circleSize, circleSize);
+            
+            // Nome da cor abaixo
+            g2d.setFont(new Font("Arial", Font.PLAIN, 11));
+            g2d.setColor(new Color(80, 80, 80));
+            fm = g2d.getFontMetrics();
+            int nomeX = x + (circleSize - fm.stringWidth(nomesCores[i])) / 2;
+            g2d.drawString(nomesCores[i], nomeX, y + circleSize + 15);
+        }
+        
+        // Mensagem de aguardo (se já recebeu cor do oponente)
+        if (corAdversaria != null && minhaCor == null) {
+            g2d.setFont(new Font("Arial", Font.ITALIC, 12));
+            g2d.setColor(new Color(70, 130, 70));
+            String msg = "✓ Cor do oponente já definida! Escolha a sua cor.";
+            int msgX = (getWidth() - g2d.getFontMetrics().stringWidth(msg)) / 2;
+            g2d.drawString(msg, msgX, startY + circleSize + 50);
         }
     }
     
     private void desenharMensagem(Graphics2D g2d, String mensagem) {
         g2d.setFont(new Font("Arial", Font.BOLD, 16));
-        g2d.setColor(Color.BLUE);
+        g2d.setColor(new Color(70, 130, 200));
         
         FontMetrics fm = g2d.getFontMetrics();
         int x = (getWidth() - fm.stringWidth(mensagem)) / 2;
@@ -272,7 +317,7 @@ public class Canvas extends JPanel {
         g2d.drawString(mensagem, x, y);
     }
     
-    // setters
+    // ========== Getters e Setters ==========
     
     public void setEstado(String estado) {
         this.estado = estado;

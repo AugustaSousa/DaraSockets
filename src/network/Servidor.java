@@ -32,28 +32,28 @@ public class Servidor {
             System.out.println("=== PARTIDA INICIADA! ===");
             System.out.println(apelido1 + " vs " + apelido2);
             
-            out1.writeUTF("ESCOLHER_ORDEM");
+            out1.writeUTF("escolherOrdem");
             out1.flush();
             
             String escolha = in1.readUTF();
             System.out.println(apelido1 + " escolheu: " + escolha);
             
             if (escolha.equals("PRIMEIRO")) {
-                out1.writeUTF("tuEhPrimeiro@" + apelido2);
-                out2.writeUTF("tuEhSegundo@" + apelido1);
+                out1.writeUTF("primeiroAJogar@" + apelido2);
+                out2.writeUTF("segundoAJogar@" + apelido1);
                 System.out.println("Ordem: " + apelido1 + " é PRIMEIRO, " + apelido2 + " é SEGUNDO");
             } else if (escolha.equals("SEGUNDO")) {
-                out1.writeUTF("tuEhSegundo@" + apelido2);
-                out2.writeUTF("tuEhPrimeiro@" + apelido1);
+                out1.writeUTF("segundoAJogar@" + apelido2);
+                out2.writeUTF("primeiroAJogar@" + apelido1);
                 System.out.println("Ordem: " + apelido1 + " é SEGUNDO, " + apelido2 + " é PRIMEIRO");
             } else {
                 int rand = (int)(Math.random() * 2);
                 if (rand == 0) {
-                    out1.writeUTF("tuEhPrimeiro@" + apelido2);
-                    out2.writeUTF("tuEhSegundo@" + apelido1);
+                    out1.writeUTF("primeiroAJogar@" + apelido2);
+                    out2.writeUTF("segundoAJogar@" + apelido1);
                 } else {
-                    out1.writeUTF("tuEhSegundo@" + apelido2);
-                    out2.writeUTF("tuEhPrimeiro@" + apelido1);
+                    out1.writeUTF("segundoAJogar@" + apelido2);
+                    out2.writeUTF("primeiroAJogar@" + apelido1);
                 }
             }
             out1.flush();
